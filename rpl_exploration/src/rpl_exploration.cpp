@@ -109,7 +109,9 @@ int main(int argc, char** argv)
         started = true;
         ROS_INFO("Started AEP Exploration Looooooooop!");
       } else {
-        ros::Duration(0.1).sleep();
+        ros::Duration(0.5).sleep();
+        ROS_INFO("Waiting for start param...");
+        continue;
       }
     }
 
