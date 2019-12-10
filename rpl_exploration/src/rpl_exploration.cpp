@@ -38,11 +38,13 @@ int main(int argc, char** argv)
   ros::ServiceClient coverage_srv =
       nh.serviceClient<aeplanner_evaluation::Coverage>("/get_coverage");
 
+
+
   // wait for fly_to server to start
-  // ROS_INFO("Waiting for fly_to action server");
-  actionlib::SimpleActionClient<rpl_exploration::FlyToAction> ac("fly_to", true);
-  // ac.waitForServer(); //will wait for infinite time
-  // ROS_INFO("Fly to ction server started!");
+   ROS_INFO("Waiting for fly_to action server");
+   actionlib::SimpleActionClient<rpl_exploration::FlyToAction> ac("fly_to", true);
+   ac.waitForServer(); //will wait for infinite time
+   ROS_INFO("Fly to ction server started!");
 
   // wait for aep server to start
   ROS_INFO("Waiting for aeplanner action server");
@@ -70,36 +72,47 @@ int main(int argc, char** argv)
       init_pose->pose.position.y + 1.0 * std::sin(init_yaw),
       init_pose->pose.position.z + 0.0, init_yaw },
   };
-
-  // This is the initialization motion, necessary that the known free space
-  // allows the planning of initial paths.
-  ROS_INFO("Starting the planner: Performing initialization motion");
+//
+//  // This is the initialization motion, necessary that the known free space
+//  // allows the planning of initial paths.
+//  ROS_INFO("Starting the planner: Performing initialization motion");
   geometry_msgs::PoseStamped last_pose;
+  last_pose.pose = init_pose->pose;
 
-  for (int i = 0; i < 2; ++i)
-  {
-    rpl_exploration::FlyToGoal goal;
-    goal.pose.pose.position.x = initial_positions[i][0];
-    goal.pose.pose.position.y = initial_positions[i][1];
-    goal.pose.pose.position.z = initial_positions[i][2];
-    goal.pose.pose.orientation =
-        tf::createQuaternionMsgFromYaw(initial_positions[i][3]);
-    last_pose.pose = goal.pose.pose;
+//  for (int i = 0; i < 2; ++i)
+//  {
+//    rpl_exploration::FlyToGoal goal;
+//    goal.pose.pose.position.x = initial_positions[i][0];
+//    goal.pose.pose.position.y = initial_positions[i][1];
+//    goal.pose.pose.position.z = initial_positions[i][2];
+//    goal.pose.pose.orientation =
+//        tf::createQuaternionMsgFromYaw(initial_positions[i][3]);
+//    last_pose.pose = goal.pose.pose;
 
-    ROS_INFO_STREAM("Sending initial goal...");
-    ac.sendGoal(goal);
-
-    ac.waitForResult(ros::Duration(0));
-  }
+//    ROS_INFO_STREAM("Sending initial goal...");
+//    ac.sendGoal(goal);
+//
+//    ac.waitForResult(ros::Duration(0));
+//  }
 
   // Start planning: The planner is called and the computed path sent to the
   // controller.
   int iteration = 0;
   int actions_taken = 1;
+  bool started = false;
 
   ros::Time start = ros::Time::now();
   while (ros::ok())
   {
+    if (!started){
+      if (nh.hasParam("/start_aep")){
+        started = true;
+        ROS_INFO("Started AEP Exploration Looooooooop!");
+      } else {
+        ros::Duration(0.1).sleep();
+      }
+    }
+
     ROS_INFO_STREAM("Planning iteration " << iteration);
     aeplanner::aeplannerGoal aep_goal;
     aep_goal.header.stamp = ros::Time::now();
